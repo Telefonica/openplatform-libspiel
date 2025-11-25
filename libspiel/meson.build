@@ -8,17 +8,14 @@ spiel_iface_sources = gnome.gdbus_codegen(
     annotations : [
       ['org.freedesktop.Speech.Provider', 'org.gtk.GDBus.C.Name', 'ProviderProxy']
     ],
-    install_header : true,
-    extra_args: '--glib-min-required=2.64')
+    install_header : true)
 
-python_module = import('python')
-python = python_module.find_installation(
-  'python3', required : true)
-generate_enums = files(meson.current_source_dir() / 'generate_enums.py')
-spiel_dbus_enums_ch = custom_target(
+prog_python = find_program('python3')
+gen_enums = join_paths(meson.current_build_dir(), 'libspiel', 'generate_enums.py')
+spiel_dbus_enums_ch = custom_target('spiel_dbus_enums_ch',
     input: iface_xml,
     output: ['spiel-dbus-enums.c', 'spiel-dbus-enums.h'],
-    command: [python, generate_enums, 'spiel', iface_xml, '@OUTPUT@'],
+    command: [prog_python, gen_enums, 'spiel', iface_xml, '@OUTPUT@'],
     install: true,
     install_dir: join_paths(get_option('includedir'), 'spiel')
 )
@@ -133,8 +130,6 @@ install_data('org.monotonous.libspiel.gschema.xml',
 )
 
 spiel_schema = gnome.compile_schemas(build_by_default: true, depend_files: 'org.monotonous.libspiel.gschema.xml')
-
-gnome.post_install(glib_compile_schemas: true)
 
 compile_schemas = find_program('glib-compile-schemas', required: false)
 if compile_schemas.found()

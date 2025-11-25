@@ -1,6 +1,6 @@
 project('spiel', 'c',
           version: '1.0.5',
-    meson_version: '>= 0.64.0',
+    meson_version: '>= 0.53.2',
   default_options: [ 'warning_level=2', 'werror=false', 'c_std=gnu11', ],
   license: 'LGPL-2.1-or-later',
 )
@@ -12,7 +12,7 @@ cc = meson.get_compiler('c')
 config_h = configuration_data()
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 configure_file(output: 'config.h', configuration: config_h)
-add_project_arguments(['-I' + meson.project_build_root()], language: 'c')
+add_project_arguments(['-I' + meson.current_build_dir()], language: 'c')
 
 project_c_args = []
 test_c_args = [
@@ -81,7 +81,7 @@ endforeach
 add_project_arguments(project_c_args, language: 'c')
 
 # Synced dependency versions
-glib_version = '>= 2.76'
+glib_version = '>= 2.62.4'
 gst_version = '>= 1.0'
 speechprovider_version = '>= 1.0.3'
 
@@ -94,7 +94,7 @@ endif
 
 speechprovider_dep = dependency('speech-provider-1.0', version: speechprovider_version, required : false)
 if speechprovider_dep.found()
-  iface_xml = speechprovider_dep.get_variable('iface_xml')
+  iface_xml = '/home/user/yocto/mesonsc2-temis-proteus3/tmp/work/aarch64-tlf-linux/libspiel/1.0.5+git999-r0/recipe-sysroot/usr/share/speech-provider/org.freedesktop.Speech.Provider.xml'
   iface_xml_path = iface_xml
   system_installed_speechprovider = true
 else
