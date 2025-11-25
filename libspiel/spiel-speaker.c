@@ -744,7 +744,7 @@ spiel_speaker_speak (SpielSpeaker *self, SpielUtterance *utterance)
   spiel_provider_proxy_call_synthesize (
       provider, g_variant_new_handle (fd), text,
       voice ? spiel_voice_get_identifier (voice) : "", pitch, rate, is_ssml,
-      lang ? lang : "", G_DBUS_CALL_FLAGS_NONE, -1, fd_list, NULL,
+      lang ? lang : "", NULL,
       _provider_call_synthesize_done, call_synth_data);
 
   g_object_unref (fd_list);
@@ -1104,7 +1104,7 @@ _provider_call_synthesize_done (GObject *source_object,
   _CallSynthData *call_synth_data = user_data;
   SpielProviderProxy *provider = SPIEL_PROVIDER_PROXY (source_object);
   GError *err = NULL;
-  spiel_provider_proxy_call_synthesize_finish (provider, NULL, res, &err);
+  spiel_provider_proxy_call_synthesize_finish (provider, res, &err);
   if (err != NULL)
     {
       SpielSpeaker *self = SPIEL_SPEAKER (call_synth_data->self);
