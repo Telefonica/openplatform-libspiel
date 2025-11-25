@@ -43,7 +43,7 @@ struct _SpielVoice
   GWeakRef provider;
 };
 
-G_DEFINE_FINAL_TYPE (SpielVoice, spiel_voice, G_TYPE_OBJECT)
+G_DEFINE_TYPE (SpielVoice, spiel_voice, G_TYPE_OBJECT)
 
 enum
 {

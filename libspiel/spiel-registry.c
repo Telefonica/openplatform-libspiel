@@ -42,7 +42,7 @@ static void initable_iface_init (GInitableIface *initable_iface);
 static void
 async_initable_iface_init (GAsyncInitableIface *async_initable_iface);
 
-G_DEFINE_FINAL_TYPE_WITH_CODE (
+G_DEFINE_TYPE_WITH_CODE (
     SpielRegistry,
     spiel_registry,
     G_TYPE_OBJECT,

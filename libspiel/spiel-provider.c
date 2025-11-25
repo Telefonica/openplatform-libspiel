@@ -39,7 +39,7 @@ struct _SpielProvider
   GHashTable *voices_hashset;
 };
 
-G_DEFINE_FINAL_TYPE (SpielProvider, spiel_provider, G_TYPE_OBJECT)
+G_DEFINE_TYPE (SpielProvider, spiel_provider, G_TYPE_OBJECT)
 
 enum
 {

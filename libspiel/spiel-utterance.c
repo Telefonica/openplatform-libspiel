@@ -43,7 +43,7 @@ struct _SpielUtterance
   gboolean is_ssml;
 };
 
-G_DEFINE_FINAL_TYPE (SpielUtterance, spiel_utterance, G_TYPE_OBJECT)
+G_DEFINE_TYPE (SpielUtterance, spiel_utterance, G_TYPE_OBJECT)
 
 enum
 {
