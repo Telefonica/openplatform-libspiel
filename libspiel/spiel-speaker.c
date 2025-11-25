@@ -26,6 +26,7 @@
 #include "spiel-voice.h"
 #include <fcntl.h>
 #include <gio/gio.h>
+#include <gio/gunixfdlist.h>
 #include <glib-unix.h>
 #include <gst/audio/audio.h>
 #include <gst/gst.h>

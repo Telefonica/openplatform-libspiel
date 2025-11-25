@@ -20,6 +20,7 @@
 
 #include "spiel-provider-private.h"
 #include "spiel-voice.h"
+#include <gio/gunixfdlist.h>
 
 /**
  * SpielVoicesListModel:
