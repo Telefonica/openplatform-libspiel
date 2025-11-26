@@ -94,7 +94,7 @@ endif
 
 speechprovider_dep = dependency('speech-provider-1.0', version: speechprovider_version, required : false)
 if speechprovider_dep.found()
-  iface_xml = '/home/user/yocto/mesonsc2-temis-proteus3/tmp/work/aarch64-tlf-linux/libspiel/1.0.5+git999-r0/recipe-sysroot/usr/share/speech-provider/org.freedesktop.Speech.Provider.xml'
+  iface_xml = speechprovider_dep.get_variable('iface_xml')
   iface_xml_path = iface_xml
   system_installed_speechprovider = true
 else
