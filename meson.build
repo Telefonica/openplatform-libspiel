@@ -94,7 +94,7 @@ endif
 
 speechprovider_dep = dependency('speech-provider-1.0', version: speechprovider_version, required : false)
 if speechprovider_dep.found()
-  iface_xml = speechprovider_dep.get_variable('iface_xml')
+  iface_xml = get_option('staging_dir_host') + speechprovider_dep.get_pkgconfig_variable('iface_xml')
   iface_xml_path = iface_xml
   system_installed_speechprovider = true
 else
