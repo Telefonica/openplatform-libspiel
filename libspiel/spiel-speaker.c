@@ -113,6 +113,21 @@ typedef struct
   GSList *deferred_messages;
 } _QueueEntry;
 
+
+static void
+_dump_pipeline_dot (SpielSpeaker *self, const gchar *tag)
+{
+  if (!self || !self->pipeline || !tag)
+    return;
+
+  if (g_getenv ("GST_DEBUG_DUMP_DOT_DIR") == NULL)
+    return;
+
+  GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS (GST_BIN (self->pipeline),
+                                     GST_DEBUG_GRAPH_SHOW_ALL,
+                                     tag);
+}
+
 static void
 _queue_entry_destroy (gpointer data)
 {
@@ -559,6 +574,8 @@ _setup_pipeline (SpielSpeaker *self, GError **error)
 
   self->convert = gst_object_ref_sink (convert);
   self->sink = gst_object_ref_sink (sink);
+
+  _dump_pipeline_dot (self, "spiel-pipeline-created");
 }
 
 static void
@@ -965,6 +982,7 @@ _handle_gst_state_change (GstBus *bus, GstMessage *msg, SpielSpeaker *self)
       pending_state == GST_STATE_VOID_PENDING &&
       element == GST_OBJECT (self->pipeline))
     {
+      _dump_pipeline_dot (self, "spiel-pipeline-playing");
       if (self->paused)
         {
           self->paused = FALSE;
@@ -1010,6 +1028,8 @@ _handle_gst_eos (GstBus *bus, GstMessage *msg, SpielSpeaker *self)
   g_return_val_if_fail (entry != NULL, TRUE);
 
   gst_element_set_state (GST_ELEMENT (entry->src), GST_STATE_NULL);
+
+  _dump_pipeline_dot (self, "spiel-pipeline-eos");
 
   return TRUE;
 }
@@ -1174,6 +1194,8 @@ _advance_to_next_entry_or_finish (SpielSpeaker *self, gboolean canceled)
   g_assert (entry);
 
   gst_element_set_state (self->pipeline, GST_STATE_NULL);
+
+  _dump_pipeline_dot (self, "spiel-pipeline-null");
 
   if (entry->error)
     {
