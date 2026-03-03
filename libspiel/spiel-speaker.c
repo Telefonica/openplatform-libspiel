@@ -527,6 +527,8 @@ _setup_pipeline (SpielSpeaker *self, GError **error)
 {
   g_autoptr (GstBus) bus = NULL;
   GstElement *convert = NULL;
+  GstElement *resample = NULL;
+  GstElement *caps_filter = NULL;
   GstElement *sink = NULL;
 
   g_assert (error == NULL || *error == NULL);
@@ -538,6 +540,19 @@ _setup_pipeline (SpielSpeaker *self, GError **error)
                            "Failed to create 'convert' element");
       return;
     }
+
+  resample = gst_element_factory_make ("audioresample", "ares");
+
+  caps_filter = gst_element_factory_make ("capsfilter", "outcaps");
+  // Caps objetivo: audio/x-raw, S16LE, 48kHz, 2 canales, interleaved
+  GstCaps *caps = gst_caps_new_simple("audio/x-raw",
+                                      "format", G_TYPE_STRING, "S16LE",
+                                      "rate", G_TYPE_INT, 48000,
+                                      "channels", G_TYPE_INT, 2,
+                                      "layout", G_TYPE_STRING, "interleaved",
+                                      NULL);
+  g_object_set(caps_filter, "caps", caps, NULL);
+  gst_caps_unref(caps);
 
   sink = gst_element_factory_make (
       g_getenv ("SPIEL_TEST") ? "fakesink" : "autoaudiosink", "sink");
@@ -553,8 +568,8 @@ _setup_pipeline (SpielSpeaker *self, GError **error)
 
   self->pipeline = gst_pipeline_new ("pipeline");
 
-  gst_bin_add_many (GST_BIN (self->pipeline), convert, sink, NULL);
-  if (!gst_element_link (convert, sink))
+  gst_bin_add_many (GST_BIN (self->pipeline), convert, resample, caps_filter, sink, NULL);
+  if (!gst_element_link_many (convert, resample, caps_filter, sink, NULL))
     {
       g_set_error_literal (error, GST_CORE_ERROR, GST_CORE_ERROR_FAILED,
                            "Failed to link 'convert' and 'sink' elements");
