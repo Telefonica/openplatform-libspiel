@@ -627,3 +627,11 @@ spiel_registry_get_providers (SpielRegistry *self)
 
   return G_LIST_MODEL (self->providers);
 }
+
+GDBusConnection *
+spiel_registry_get_dbus_connection (SpielRegistry *self)
+{
+  g_return_val_if_fail (SPIEL_IS_REGISTRY (self), NULL);
+
+  return self->connection;
+}

@@ -16,6 +16,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "spiel-collect-providers.h"
 #include "spiel.h"
 
 #include "spiel-speaker.h"
@@ -696,6 +697,7 @@ typedef struct
   // We use an utterance instead of a queue entry because we can hold a strong
   // reference.
   SpielUtterance *utterance;
+  SpielProviderProxy *provider;
 } _CallSynthData;
 
 /**
@@ -714,10 +716,9 @@ spiel_speaker_speak (SpielSpeaker *self, SpielUtterance *utterance)
 {
   _QueueEntry *entry = g_slice_new0 (_QueueEntry);
   _CallSynthData *call_synth_data = g_slice_new0 (_CallSynthData);
-  SpielProviderProxy *provider = NULL;
   GUnixFDList *fd_list = g_unix_fd_list_new ();
-  int mypipe[2];
-  int fd;
+  int mypipe[2] = {-1, -1};
+  int fd = -1;
   const char *text = spiel_utterance_get_text (utterance);
   const char *lang = spiel_utterance_get_language (utterance);
   const char *output_format = NULL;
@@ -726,6 +727,7 @@ spiel_speaker_speak (SpielSpeaker *self, SpielUtterance *utterance)
   gdouble pitch, rate, volume;
   g_autoptr (SpielVoice) voice = NULL;
   GstStructure *gst_struct;
+  g_autoptr(GError) err = NULL;
 
   g_return_if_fail (SPIEL_IS_SPEAKER (self));
   g_return_if_fail (SPIEL_IS_UTTERANCE (utterance));
@@ -746,23 +748,55 @@ spiel_speaker_speak (SpielSpeaker *self, SpielUtterance *utterance)
       g_object_ref (voice);
     }
 
-  provider = spiel_registry_get_provider_for_voice (self->registry, voice);
+  call_synth_data->provider = spiel_registry_get_provider_for_voice (self->registry, voice);
 
-  // XXX: Emit error on failure
-  g_unix_open_pipe (mypipe, 0, NULL);
-  fd = g_unix_fd_list_append (fd_list, mypipe[1], NULL);
+  /* Create pipe (write end sent to provider; read end consumed locally) */
+  if (!g_unix_open_pipe (mypipe, FD_CLOEXEC, &err))
+    {
+      g_warning ("Failed to create pipe for synthesis: %s", err->message);
+
+      /* TODO: emit utterance-error (SPIEL_ERROR_INTERNAL_PROVIDER_FAILURE or similar) */
+      g_object_unref (fd_list);
+      g_slice_free (_CallSynthData, call_synth_data);
+      g_slice_free (_QueueEntry, entry);
+      return;
+    }
+  /* Attach write end to fd list */
+  fd = g_unix_fd_list_append (fd_list, mypipe[1], &err);
+  if (fd < 0)
+    {
+      g_warning ("Failed to append pipe fd to fd list: %s", err->message);
+
+      close (mypipe[0]);
+      close (mypipe[1]);
+
+      /* TODO: emit utterance-error */
+      g_object_unref (fd_list);
+      g_slice_free (_CallSynthData, call_synth_data);
+      g_slice_free (_QueueEntry, entry);
+      return;
+    }
 
   // XXX: Emit error on failure
   close (mypipe[1]);
+  mypipe[1] = -1;
 
   call_synth_data->self = self;
   call_synth_data->utterance = g_object_ref (utterance);
 
-  spiel_provider_proxy_call_synthesize (
-      provider, g_variant_new_handle (fd), text,
-      voice ? spiel_voice_get_identifier (voice) : "", pitch, rate, is_ssml,
-      lang ? lang : "", NULL,
-      _provider_call_synthesize_done, call_synth_data);
+  GVariant *params = g_variant_new("(hssddbs)",
+				   fd,
+				   text,
+				   voice ? spiel_voice_get_identifier (voice) : "",
+				   pitch, rate,
+				   is_ssml,
+				   lang ? lang : "");
+
+
+  g_dbus_connection_call_with_unix_fd_list (
+      spiel_registry_get_dbus_connection(self->registry), "org.Picotts.Speech.Provider", "/org/Picotts/Speech/Provider",
+      "org.freedesktop.Speech.Provider", "Synthesize", params, NULL,
+      G_DBUS_CALL_FLAGS_NONE, -1, fd_list, NULL, _provider_call_synthesize_done, call_synth_data);
 
   g_object_unref (fd_list);
 
@@ -1122,7 +1156,7 @@ _provider_call_synthesize_done (GObject *source_object,
                                 gpointer user_data)
 {
   _CallSynthData *call_synth_data = user_data;
-  SpielProviderProxy *provider = SPIEL_PROVIDER_PROXY (source_object);
+  SpielProviderProxy *provider = SPIEL_PROVIDER_PROXY (call_synth_data->provider);
   GError *err = NULL;
   spiel_provider_proxy_call_synthesize_finish (provider, res, &err);
   if (err != NULL)

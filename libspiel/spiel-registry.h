@@ -50,4 +50,6 @@ GListModel *spiel_registry_get_voices (SpielRegistry *self);
 
 GListModel *spiel_registry_get_providers (SpielRegistry *self);
 
+GDBusConnection *spiel_registry_get_dbus_connection (SpielRegistry *self);
+
 G_END_DECLS
