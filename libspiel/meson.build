@@ -43,7 +43,6 @@ spiel_public_headers = [
   'spiel-voice.h',
   'spiel-speaker.h',
   'spiel-provider.h',
-  'spiel-registry.h',
   'spiel-voices-list-model.h',
 ]
 
@@ -80,7 +79,7 @@ spiel_deps = [
   dependency('gio-unix-2.0', version: glib_version),
   dependency('gstreamer-1.0', version: gst_version),
   dependency('gstreamer-audio-1.0', version: gst_version),
-  dependency('speech-provider-1.0', version: speechprovider_version),
+  speechprovider_dep,
 ]
 
 spiel_lib = shared_library('spiel-' + api_version,

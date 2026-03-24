@@ -52,7 +52,11 @@ struct _SpielProviderSrc
   /* fd and flag indicating whether fd is seekable */
   gint fd;
 
+  GstPoll *fdset;
+
   gulong curoffset; /* current offset in file */
+
+  gboolean got_header;
 
   SpeechProviderStreamReader *reader;
 };
