@@ -808,8 +808,11 @@ spiel_speaker_speak (SpielSpeaker *self, SpielUtterance *utterance)
 				   lang ? lang : "");
 
 
+  /* Llamamos al provider dueño de la voz (nombre y ruta de su proxy), no a uno fijo */
   g_dbus_connection_call_with_unix_fd_list (
-      spiel_registry_get_dbus_connection(self->registry), "org.Picotts.Speech.Provider", "/org/Picotts/Speech/Provider",
+      spiel_registry_get_dbus_connection(self->registry),
+      g_dbus_proxy_get_name (G_DBUS_PROXY (call_synth_data->provider)),
+      g_dbus_proxy_get_object_path (G_DBUS_PROXY (call_synth_data->provider)),
       "org.freedesktop.Speech.Provider", "Synthesize", params, NULL,
       G_DBUS_CALL_FLAGS_NONE, -1, fd_list, NULL, _provider_call_synthesize_done, call_synth_data);
 
